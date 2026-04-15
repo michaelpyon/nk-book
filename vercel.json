@@ -1,6 +1,7 @@
 {
-  "buildCommand": null,
-  "outputDirectory": ".",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": "public",
   "cleanUrls": true,
   "headers": [
     {

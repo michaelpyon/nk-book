@@ -1,0 +1,11 @@
+output/
+photos/
+addendum return to NK/
+*.pdf
+*.mov
+*.mp4
+__pycache__/
+*.pyc
+pipeline.log
+progress.json
+.git/
