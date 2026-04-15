@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Pipeline output (large files, generated)
+output/
+photos/
+progress.json
+pipeline.log
+
+# Source PDFs and videos (too large for git)
+*.pdf
+*.mov
+*.mp4
+
+# Addendum photos
+addendum return to NK/
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store

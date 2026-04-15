@@ -1,0 +1,4 @@
+anthropic
+Pillow
+pillow-heif
+pdf2image
