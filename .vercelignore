@@ -4,8 +4,11 @@ addendum return to NK/
 *.pdf
 *.mov
 *.mp4
-__pycache__/
+*.py
 *.pyc
+__pycache__/
+requirements.txt
 pipeline.log
 progress.json
+grandpa-*.md
 .git/

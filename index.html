@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NK-Book - Korean OCR + Translation Pipeline</title>
+  <meta name="description" content="A Python pipeline that turns scanned Korean book pages into verified English translations. OCR with Claude vision, voice-preserving translation, and multi-agent validation.">
+  <meta name="theme-color" content="#fbf8f3">
+  <meta name="author" content="Michael Pyon">
+
+  <link rel="canonical" href="https://nk-book.vercel.app/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nk-book.vercel.app/">
+  <meta property="og:title" content="NK-Book - Korean OCR + Translation Pipeline">
+  <meta property="og:description" content="Scanned Korean pages to verified English. OCR, translation, and 3-agent validation.">
+  <meta property="og:image" content="https://nk-book.vercel.app/og.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://nk-book.vercel.app/">
+  <meta name="twitter:title" content="NK-Book - Korean OCR + Translation Pipeline">
+  <meta name="twitter:description" content="Scanned Korean pages to verified English. OCR, translation, and 3-agent validation.">
+  <meta name="twitter:image" content="https://nk-book.vercel.app/og.svg">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23fbf8f3'/%3E%3Ctext x='50' y='72' font-size='68' font-family='Georgia,serif' text-anchor='middle' fill='%237a1f2b'%3E%ED%95%9C%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body, h1, h2, h3, h4, p, figure, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    img, svg { display: block; max-width: 100%; }
+
+    :root {
+      --bg: #fbf8f3;
+      --bg-soft: #f3ede2;
+      --rule: #e6dfd2;
+      --ink: #1a1614;
+      --ink-soft: #4a423d;
+      --ink-mute: #786d65;
+      --accent: #7a1f2b;
+      --accent-soft: #a93b48;
+      --serif: 'Newsreader', 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover, a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+    .wrap {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* Masthead */
+    header.mast {
+      border-bottom: 1px solid var(--rule);
+      padding: 28px 0 22px;
+    }
+    .mast-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .mast-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: 0.01em;
+    }
+    .mast-meta {
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      color: var(--ink-mute);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* Hero */
+    section.hero { padding: 88px 0 64px; }
+    .eyebrow {
+      font-family: var(--sans);
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 28px;
+      display: inline-block;
+      border-top: 2px solid var(--accent);
+      padding-top: 10px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2.4rem, 6vw, 3.9rem);
+      line-height: 1.05;
+      letter-spacing: -0.018em;
+      color: var(--ink);
+      margin-bottom: 28px;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .lede {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 1.32rem;
+      line-height: 1.55;
+      color: var(--ink-soft);
+      max-width: 620px;
+      margin-bottom: 40px;
+    }
+    .cta-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 12px 22px;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      border-radius: 2px;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--ink);
+      color: var(--bg);
+      border: 1px solid var(--ink);
+    }
+    .btn-primary:hover, .btn-primary:focus-visible {
+      background: var(--accent);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--rule);
+    }
+    .btn-ghost:hover, .btn-ghost:focus-visible {
+      border-color: var(--ink);
+      text-decoration: none;
+    }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* Article-like sections */
+    section.col { padding: 56px 0; border-top: 1px solid var(--rule); }
+    .section-label {
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      margin-bottom: 18px;
+    }
+    h2 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.7rem, 3.2vw, 2.15rem);
+      line-height: 1.18;
+      letter-spacing: -0.012em;
+      color: var(--ink);
+      margin-bottom: 22px;
+    }
+    .body p {
+      font-family: var(--serif);
+      font-size: 1.12rem;
+      line-height: 1.7;
+      color: var(--ink-soft);
+      margin-bottom: 16px;
+    }
+    .body p:last-child { margin-bottom: 0; }
+    .drop::first-letter {
+      font-family: var(--serif);
+      font-weight: 600;
+      float: left;
+      font-size: 3.6rem;
+      line-height: 0.92;
+      padding: 6px 10px 0 0;
+      color: var(--accent);
+    }
+
+    /* Sample triptych */
+    .sample {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    @media (min-width: 720px) {
+      .sample { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .panel {
+      background: var(--bg-soft);
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      padding: 22px 22px 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 240px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .panel-step {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .panel-name {
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+    }
+    .panel-body p {
+      font-family: var(--serif);
+      font-size: 0.98rem;
+      line-height: 1.6;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .panel-body p:last-child { margin-bottom: 0; }
+    .panel-body .ko { font-family: var(--serif); }
+    .panel.scan {
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .scan-page {
+      flex: 1;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0 14px,
+          var(--rule) 14px 15px
+        );
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+    .scan-line {
+      height: 8px;
+      background: var(--bg-soft);
+      border-radius: 1px;
+    }
+    .scan-line.short { width: 62%; }
+    .scan-line.med { width: 88%; }
+    .scan-stamp {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      color: var(--ink-mute);
+      letter-spacing: 0.1em;
+    }
+
+    /* Tech stack */
+    .stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--ink);
+      background: var(--bg-soft);
+      border: 1px solid var(--rule);
+      padding: 8px 14px;
+      border-radius: 2px;
+    }
+
+    /* Pipeline list */
+    .steps { display: grid; gap: 22px; }
+    .step {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 18px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .step:last-child { border-bottom: 0; padding-bottom: 0; }
+    .step-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 2rem;
+      color: var(--accent);
+      line-height: 1;
+      padding-top: 4px;
+    }
+    .step h3 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 1.18rem;
+      letter-spacing: -0.005em;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .step p {
+      font-family: var(--serif);
+      font-size: 1.02rem;
+      line-height: 1.6;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 32px 0 56px;
+      margin-top: 24px;
+    }
+    .foot-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      color: var(--ink-mute);
+    }
+    .foot-row a { color: var(--ink); }
+    .foot-row a:hover { color: var(--accent); }
+
+    @media (max-width: 540px) {
+      section.hero { padding: 56px 0 40px; }
+      section.col { padding: 44px 0; }
+      .step { grid-template-columns: 40px 1fr; gap: 12px; }
+      .step-num { font-size: 1.6rem; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .btn { transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+      .btn-primary:hover { transform: translateY(-1px); }
+    }
+  </style>
+</head>
+<body>
+  <header class="mast" role="banner">
+    <div class="wrap mast-row">
+      <div class="mast-title">NK-Book</div>
+      <div class="mast-meta">A Translation Pipeline &middot; Vol. 01</div>
+    </div>
+  </header>
+
+  <main class="wrap" role="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <span class="eyebrow">Korean OCR + Translation</span>
+      <h1 id="hero-title">From scanned page<br>to <em>verified English.</em></h1>
+      <p class="lede">
+        A Python pipeline that reads photos of Korean book pages, translates them with the author's voice intact, and grades every chunk through 3 independent validators before shipping a final manuscript.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/michaelpyon/nk-book" target="_blank" rel="noopener" aria-label="View NK-Book repository on GitHub">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View source on GitHub
+        </a>
+        <a class="btn btn-ghost" href="#how">Read how it works</a>
+      </div>
+    </section>
+
+    <section class="col" aria-labelledby="primer-title">
+      <p class="section-label">Primer</p>
+      <h2 id="primer-title">A small machine for translating a family book.</h2>
+      <div class="body">
+        <p class="drop">NK-Book started with a single hardback memoir scanned on a phone, page by page. The pipeline takes those photos, runs them through Claude's vision model for OCR, then translates the Korean in 3-page chunks with a sliding context window so voice and proper nouns stay consistent across the whole book.</p>
+        <p>Every chunk is then audited by 3 independent agents: one back-translates the English into Korean and compares against the original, one scores tone and register, and one reconciles the notes into a quality grade. Anything below threshold gets retranslated, up to 2 attempts, before it's flagged for human review.</p>
+      </div>
+    </section>
+
+    <section class="col" aria-labelledby="sample-title">
+      <p class="section-label">A page in 3 stages</p>
+      <h2 id="sample-title">Scanned page, OCR'd Korean, finished English.</h2>
+      <div class="sample" role="group" aria-label="Pipeline sample output">
+        <article class="panel scan">
+          <div class="panel-head">
+            <span class="panel-step">01</span>
+            <span class="panel-name">Scan</span>
+          </div>
+          <div class="scan-page" aria-hidden="true">
+            <span class="scan-line med"></span>
+            <span class="scan-line short"></span>
+            <span class="scan-line med"></span>
+            <span class="scan-line med"></span>
+            <span class="scan-line short"></span>
+            <span class="scan-line med"></span>
+            <span class="scan-stamp">page 042 &middot; 300 dpi</span>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <span class="panel-step">02</span>
+            <span class="panel-name">Korean</span>
+          </div>
+          <div class="panel-body" lang="ko">
+            <p class="ko">우리는 강을 따라 북쪽으로 걸었다. 아버지는 한 마디도 하지 않으셨다.</p>
+            <p class="ko">달이 밝아 길이 보였지만, 마음은 여전히 어두웠다.</p>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <span class="panel-step">03</span>
+            <span class="panel-name">English</span>
+          </div>
+          <div class="panel-body" lang="en">
+            <p>We walked north along the river. My father didn't say a word.</p>
+            <p>The moon was bright enough to see the path, but my heart stayed dark.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="col" id="how" aria-labelledby="how-title">
+      <p class="section-label">How it works</p>
+      <h2 id="how-title">3 layers, every chunk audited.</h2>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-num" aria-hidden="true">i</span>
+          <div>
+            <h3>OCR with Claude vision</h3>
+            <p>Each page photo goes to Claude's vision API. Korean text comes out exactly as written, with paragraph breaks preserved. PDFs get rasterized at 300 dpi first.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num" aria-hidden="true">ii</span>
+          <div>
+            <h3>Translation with a sliding window</h3>
+            <p>Text splits into 3-page chunks. A glossary of proper nouns and recurring terms carries across chunks so the same name renders the same way on page 4 and page 240.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num" aria-hidden="true">iii</span>
+          <div>
+            <h3>Validation by 3 agents</h3>
+            <p>A back-translator catches semantic drift. A tone scorer grades formality, emotion, and rhythm. An editorial agent reconciles the notes and assigns a grade. Anything under the bar is retranslated automatically.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="col" aria-labelledby="stack-title">
+      <p class="section-label">Tech stack</p>
+      <h2 id="stack-title">Built with a small kit.</h2>
+      <div class="body" style="margin-bottom: 18px;">
+        <p>Plain Python and the Anthropic SDK do the heavy lifting. No web framework, no database, no orchestration layer. Every step is resumable: if it crashes mid-run, re-running picks up where it left off.</p>
+      </div>
+      <ul class="stack" aria-label="Technology used">
+        <li class="chip">Python 3.11</li>
+        <li class="chip">Claude API (vision + text)</li>
+        <li class="chip">Anthropic SDK</li>
+        <li class="chip">pdf2image</li>
+        <li class="chip">Pillow</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="wrap foot-row">
+      <span>&copy; 2026 Michael Pyon. Built for a family memoir.</span>
+      <span><a href="https://github.com/michaelpyon/nk-book" target="_blank" rel="noopener">github.com/michaelpyon/nk-book</a></span>
+    </div>
+  </footer>
+</body>
+</html>

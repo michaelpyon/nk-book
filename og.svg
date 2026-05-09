@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      .bg { fill: #fbf8f3; }
+      .rule { stroke: #e6dfd2; stroke-width: 1; }
+      .ink { fill: #1a1614; }
+      .accent { fill: #7a1f2b; }
+      .mute { fill: #786d65; }
+      .serif { font-family: 'Newsreader', Georgia, 'Times New Roman', serif; }
+      .sans { font-family: 'Inter', -apple-system, sans-serif; }
+      .mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; }
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="630"/>
+
+  <line class="rule" x1="80" y1="92" x2="1120" y2="92"/>
+  <text x="80" y="74" class="serif ink" font-size="22" font-weight="600">NK-Book</text>
+  <text x="1120" y="74" text-anchor="end" class="sans mute" font-size="14" letter-spacing="3">A TRANSLATION PIPELINE &#183; VOL. 01</text>
+
+  <line class="rule" x1="80" y1="178" x2="200" y2="178"/>
+  <text x="80" y="206" class="sans accent" font-size="15" font-weight="600" letter-spacing="4">KOREAN OCR + TRANSLATION</text>
+
+  <text x="80" y="296" class="serif ink" font-size="86" font-weight="500" letter-spacing="-1.5">From scanned page</text>
+  <text x="80" y="392" class="serif ink" font-size="86" font-weight="500" letter-spacing="-1.5">to <tspan class="accent" font-style="italic">verified English.</tspan></text>
+
+  <text x="80" y="468" class="serif mute" font-size="26" font-weight="400">Python pipeline. OCR, voice-preserving translation,</text>
+  <text x="80" y="504" class="serif mute" font-size="26" font-weight="400">3-agent validation. Open source.</text>
+
+  <line class="rule" x1="80" y1="556" x2="1120" y2="556"/>
+  <text x="80" y="592" class="mono mute" font-size="16">github.com/michaelpyon/nk-book</text>
+  <text x="1120" y="592" text-anchor="end" class="serif accent" font-size="40" font-weight="600">&#54620;</text>
+</svg>
